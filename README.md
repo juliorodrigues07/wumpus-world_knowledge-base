@@ -5,7 +5,7 @@ Implementação de um algoritmo capaz de gerar a configuração inicial, armazen
 
 # Requisitos
 
- - [Python](https://python.org) 2.x ou 3.x
+ - [Python](https://python.org) 2.7 ou 3.5 ou superior
  
  - Biblioteca [PyCryptodome](https://pycryptodome.readthedocs.io/en/latest/src/introduction.html)
  
