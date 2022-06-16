@@ -8,6 +8,7 @@ size = 6
 # Probabilidade de uma posição qualquer do mundo (exceto a inicial) ser um poço
 prob = 0.2
 
+player_position = [size - 2, 1]
 # Posições adjacentes ao jogador em que não podem ser colocados poços ou o Wumpus
 adj1 = [size - 2, 0]
 adj2 = [size - 1, 1]
@@ -19,12 +20,12 @@ class WumpusWorld:
 
         self.field = [['0'] * size for i in range(size)]
         self.limits = [['0'] * size for i in range(size)]
-        self.player = [size - 1, 0]
+        self.agent = [size - 2, 1]
         self.perceptions = None
         self.wumpus = 0
 
         self.place_limits()
-        self.place_player()
+        self.place_agent()
         self.place_gold()
         self.place_wumpus()
         self.place_pits()
@@ -38,9 +39,9 @@ class WumpusWorld:
 
         return x, y
 
-    def place_player(self):
+    def place_agent(self):
 
-        self.field[size - 2][1] = 'Jogador'
+        self.field[size - 2][1] = 'Agente'
 
     def place_gold(self):
 
@@ -79,7 +80,7 @@ class WumpusWorld:
                 if (x == 0) or (y == 0) or (x == size - 1) or (y == size - 1):
                     self.limits[x][y] = 'Wall'
 
-    # Checa se existem posições válidas acima, abaixo, à esquerda e à direta da posição dada, respectivamente
+    # Checa se existem posições válidas (não são paredes) acima, abaixo, à esquerda e à direta da posição dada, respectivamente
     def adjacent(self, x, y):
 
         adjacents = list()
@@ -135,6 +136,7 @@ class WumpusWorld:
         self.perceptions = field
 
 
+# Teste
 def main():
 
     test = WumpusWorld()
