@@ -2,7 +2,8 @@ from Cryptodome.Random import random
 
 
 # Dimensão do tamanho da malha
-size = 4
+# 6 -> matriz 4 x 4, as linhas e colunas 0 e 5 correspondem apenas às paredes do mundo como delimitadores
+size = 6
 
 # Probabilidade de uma posição qualquer do mundo (exceto a inicial) ser um poço
 prob = 0.2
@@ -12,20 +13,21 @@ adj1 = [size - 2, 0]
 adj2 = [size - 1, 1]
 
 
-class WumpusWorldBuilder:
+class WumpusWorld:
 
     def __init__(self):
 
         self.field = [['0'] * size for i in range(size)]
         self.limits = [['0'] * size for i in range(size)]
-        self.perceptions = None
         self.player = [size - 1, 0]
+        self.perceptions = None
         self.wumpus = 0
+
+        self.place_limits()
         self.place_player()
         self.place_gold()
         self.place_wumpus()
         self.place_pits()
-        self.place_limits()
         self.perceptions_build()
 
     @staticmethod
@@ -38,14 +40,14 @@ class WumpusWorldBuilder:
 
     def place_player(self):
 
-        self.field[size - 1][0] = 'Jogador'
+        self.field[size - 2][1] = 'Jogador'
 
     def place_gold(self):
 
         while True:
             x, y = self.random_pair()
 
-            if self.field[x][y] == '0':
+            if self.field[x][y] == '0' and self.limits[x][y] != 'Wall':
                 self.field[x][y] = 'Ouro'
                 break
 
@@ -54,20 +56,19 @@ class WumpusWorldBuilder:
         while True:
             x, y = self.random_pair()
 
-            if self.field[x][y] == '0' and [x, y] != adj1 and [x, y] != adj2:
+            if self.field[x][y] == '0' and [x, y] != adj1 and [x, y] != adj2 and self.limits[x][y] != 'Wall':
                 self.field[x][y] = 'Wumpus'
                 self.wumpus = 1
                 break
 
     def place_pits(self):
-
-        n_pits = int((pow(size, 2) - 1) * prob)
+        n_pits = int((pow(size - 2, 2) - 1) * prob)
 
         i = 0
         while i < n_pits:
             x, y = self.random_pair()
 
-            if self.field[x][y] == '0' and [x, y] != adj1 and [x, y] != adj2:
+            if self.field[x][y] == '0' and [x, y] != adj1 and [x, y] != adj2 and self.limits[x][y] != 'Wall':
                 self.field[x][y] = 'Poço'
                 i += 1
 
@@ -83,24 +84,24 @@ class WumpusWorldBuilder:
 
         adjacents = list()
 
-        if x - 1 >= 0:
+        if x - 1 > 0:
             adjacents.append(self.field[x - 1][y])
         else:
             adjacents.append('None')
 
-        try:
+        if x + 1 < size - 1:
             adjacents.append(self.field[x + 1][y])
-        except IndexError:
+        else:
             adjacents.append('None')
 
-        if y - 1 >= 0:
+        if y - 1 > 0:
             adjacents.append(self.field[x][y - 1])
         else:
             adjacents.append('None')
 
-        try:
+        if y + 1 < size - 1:
             adjacents.append(self.field[x][y + 1])
-        except IndexError:
+        else:
             adjacents.append('None')
 
         return adjacents
@@ -119,12 +120,13 @@ class WumpusWorldBuilder:
 
                 if self.limits[x][y] == 'Wall':
                     perception[3] = 'Impacto'
-                if 'Wumpus' in neighbors:
-                    perception[0] = 'Fedor'
-                if 'Pit' in neighbors:
-                    perception[1] = 'Brisa'
-                if self.field[x][y] == 'Ouro':
-                    perception[2] = 'Resplendor'
+                else:
+                    if 'Wumpus' in neighbors:
+                        perception[0] = 'Fedor'
+                    elif 'Poço' in neighbors:
+                        perception[1] = 'Brisa'
+                    elif self.field[x][y] == 'Ouro':
+                        perception[2] = 'Resplendor'
 
                 perception_line.append(perception)
 
@@ -135,7 +137,7 @@ class WumpusWorldBuilder:
 
 def main():
 
-    test = WumpusWorldBuilder()
+    test = WumpusWorld()
     for i in range(size):
         print(test.field[i])
 
