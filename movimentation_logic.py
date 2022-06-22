@@ -1,6 +1,7 @@
 from knowledge_base import KnowledgeBase
 from environment import WumpusWorld
 from environment import random
+from utilities import possible_actions
 
 # Medida de desempenho
 got_gold = 1000
@@ -11,7 +12,7 @@ arrow_use = -10
 
 class Exploration:
 
-    def __init__(self, world : WumpusWorld, base : KnowledgeBase):
+    def __init__(self, world: WumpusWorld, base: KnowledgeBase):
 
         self.world = world
         self.base = base
@@ -23,6 +24,7 @@ class Exploration:
         self.alive = True
 
         self.previous_position = world.agent
+        self.previous_pointing = 'Direita'
         self.wumpus_killed = 0
         self.pits_fallen = 0
         self.visited_positions = 0
@@ -30,22 +32,27 @@ class Exploration:
         self.total_actions = 0
         self.arrows_used = 0
 
-    @staticmethod
-    def possible_actions(position):
+    def move_agent(self):
 
-        return [[position[0] - 1, position[1]], [position[0], position[1] - 1],
-                [position[0] + 1, position[1]], [position[0], position[1] + 1]]
+        n = possible_actions(self.position)
+        s = random.randrange(4)
+        next_action = n[s]
 
-    def moving(self):
+        while self.base.ask_knowledge_base(next_action):
+            s = random.randrange(4)
+            next_action = n[s]
 
-        n = self.possible_actions(self.position)
-        x = random.randrange(4)
-
-        next_action = n[x]
+        self.previous_position = self.position
         self.position = next_action
 
         perception = self.world.get_perception(self.position)
-        self.base.tell_perception(self.position, perception)
+        wall = self.base.tell_perception(self.position, self.previous_position, perception)
+
+        if not wall:
+            self.position = self.previous_position
+            self.total_actions += 3
+
+        print(self.total_actions)
 
     # def analyze perception(): tell
 
@@ -56,7 +63,7 @@ def main():
     world = WumpusWorld()
     base = KnowledgeBase(world)
     t = Exploration(world, base)
-    t.moving()
+    t.move_agent()
 
 
 if __name__ == '__main__':
