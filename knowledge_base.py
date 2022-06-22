@@ -11,7 +11,7 @@ class KnowledgeBase:
     def __init__(self, world : WumpusWorld):
 
         self.visited = [[size - 2, 1]]
-        self.safe = [player_position, adj1, adj2]
+        self.safe = None
         self.possible_danger = None
         self.danger = None
         self.unknown = None
@@ -27,6 +27,10 @@ class KnowledgeBase:
                     positions.append([x, y])
 
         self.unknown = positions
+
+    def tell_perception(self, position, perception):
+
+        print(perception)
 
 
 # Teste
