@@ -135,6 +135,11 @@ class WumpusWorld:
 
         self.perceptions = field
 
+    def get_perception(self, position):
+
+        x = position[0]
+        y = position[1]
+        return self.perceptions[x][y]
 
 # Teste
 def main():
@@ -149,3 +154,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
