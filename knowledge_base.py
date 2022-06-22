@@ -28,6 +28,10 @@ class KnowledgeBase:
 
         self.unknown = positions
 
+    def tell_perception(self, position, perception):
+
+        print(perception)
+
 
 # Teste
 def main():
