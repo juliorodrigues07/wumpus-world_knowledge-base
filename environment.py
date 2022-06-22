@@ -141,6 +141,7 @@ class WumpusWorld:
         y = position[1]
         return self.perceptions[x][y]
 
+
 # Teste
 def main():
 
