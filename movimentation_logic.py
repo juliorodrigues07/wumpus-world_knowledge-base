@@ -1,12 +1,13 @@
 from knowledge_base import KnowledgeBase
 from environment import WumpusWorld
 from environment import random
+from environment import size
 from utilities import possible_actions
 
 # Medida de desempenho
 got_gold = 1000
 got_killed = -1000
-action_exe = 1
+action_exe = -1
 arrow_use = -10
 
 
@@ -34,33 +35,52 @@ class Exploration:
 
     def move_agent(self):
 
-        n = possible_actions(self.position)
-        s = random.randrange(4)
-        next_action = n[s]
+        i = 0
+        while True:
 
-        while self.base.ask_knowledge_base(next_action):
-            s = random.randrange(4)
-            next_action = n[s]
+            if i == 0:
+                self.previous_position = self.position
+                perception = self.world.get_perception(self.position)
+                status, count = self.base.tell_perception(self.position, self.previous_position, perception)
+            else:
+                actions = possible_actions(self.position)
+                next_action = self.base.ask_knowledge_base(actions, self.previous_position)
 
-        self.previous_position = self.position
-        self.position = next_action
+                self.previous_position = self.position
+                self.position = next_action
 
-        perception = self.world.get_perception(self.position)
-        wall = self.base.tell_perception(self.position, self.previous_position, perception)
+                perception = self.world.get_perception(self.position)
+                status, count = self.base.tell_perception(self.position, self.previous_position, perception)
 
-        if not wall:
-            self.position = self.previous_position
-            self.total_actions += 3
+            if status == 'Volte':
+                self.position = self.previous_position
+                self.total_actions += 3
+            elif status == 'Ouro':
+                self.total_actions += 1
+                self.points += got_gold
+                print("GOLD!")
+                return True
+
+            if count > 20:
+                break
+
+            i += 1
 
         print(self.total_actions)
-
-    # def analyze perception(): tell
 
 
 # Teste
 def main():
 
     world = WumpusWorld()
+
+    print('\n')
+    for i in range(size):
+        print(world.field[i])
+    print('\n')
+    for i in range(size):
+        print(world.perceptions[i])
+
     base = KnowledgeBase(world)
     t = Exploration(world, base)
     t.move_agent()
