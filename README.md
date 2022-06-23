@@ -10,3 +10,7 @@ Implementação de um algoritmo capaz de gerar a configuração inicial, armazen
  - Biblioteca [PyCryptodome](https://pycryptodome.readthedocs.io/en/latest/src/introduction.html)
  
        pip install pycryptodomex
+       
+# Execução
+
+       python3 movimentation_logic.py
