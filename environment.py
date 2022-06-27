@@ -1,4 +1,4 @@
-from Cryptodome.Random import random
+from utilities import random_pair
 
 
 # Dimensão do tamanho da malha
@@ -22,7 +22,6 @@ class WumpusWorld:
         self.limits = [['X'] * size for i in range(size)]
         self.agent = [size - 2, 1]
         self.perceptions = None
-        self.wumpus = 0
 
         self.place_limits()
         self.place_agent()
@@ -31,14 +30,6 @@ class WumpusWorld:
         self.place_pits()
         self.perceptions_build()
 
-    @staticmethod
-    def random_pair():
-
-        x = random.randrange(size)
-        y = random.randrange(size)
-
-        return x, y
-
     def place_agent(self):
 
         self.field[size - 2][1] = 'A'
@@ -46,7 +37,7 @@ class WumpusWorld:
     def place_gold(self):
 
         while True:
-            x, y = self.random_pair()
+            x, y = random_pair(size)
 
             if self.field[x][y] == '-' and self.limits[x][y] != 'Wall':
                 self.field[x][y] = 'O'
@@ -55,11 +46,15 @@ class WumpusWorld:
     def place_wumpus(self):
 
         while True:
-            x, y = self.random_pair()
+            x, y = random_pair(size)
 
-            if self.field[x][y] == '-' and [x, y] != adj1 and [x, y] != adj2 and self.limits[x][y] != 'Wall':
-                self.field[x][y] = 'W'
-                self.wumpus = 1
+            if (self.field[x][y] == '-' or self.field[x][y] == 'O') and self.limits[x][y] != 'Wall' \
+                    and [x, y] != adj1 and [x, y] != adj2:
+
+                if self.field[x][y] == '-':
+                    self.field[x][y] = 'W'
+                else:
+                    self.field[x][y] = 'O&W'    # Ouro e Wumpus na mesma posição
                 break
 
     def place_pits(self):
@@ -67,7 +62,7 @@ class WumpusWorld:
 
         i = 0
         while i < n_pits:
-            x, y = self.random_pair()
+            x, y = random_pair(size)
 
             if self.field[x][y] == '-' and [x, y] != adj1 and [x, y] != adj2 and self.limits[x][y] != 'Wall':
                 self.field[x][y] = 'P'
@@ -122,13 +117,13 @@ class WumpusWorld:
 
                 if self.limits[x][y] == 'Wall':
                     perception[3] = 'Impacto'
-                elif self.field[x][y] == 'O':
-                    perception[2] = 'Resplendor'
                 else:
                     if 'W' in neighbors:
                         perception[0] = 'Fedor'
                     if 'P' in neighbors:
                         perception[1] = 'Brisa'
+                    if self.field[x][y] == 'O':
+                        perception[2] = 'Resplendor'
 
                 perception_line.append(perception)
 
@@ -141,19 +136,3 @@ class WumpusWorld:
         x = position[0]
         y = position[1]
         return self.perceptions[x][y]
-
-
-# Teste
-def main():
-
-    test = WumpusWorld()
-    for i in range(size):
-        print(test.field[i])
-
-    for i in range(size):
-        print(test.perceptions[i])
-
-
-if __name__ == '__main__':
-    main()
-
