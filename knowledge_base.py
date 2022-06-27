@@ -1,9 +1,6 @@
 from environment import WumpusWorld
-from environment import random
 from environment import size
 from environment import player_position
-from environment import adj1
-from environment import adj2
 from utilities import possible_actions
 
 
@@ -36,7 +33,13 @@ class KnowledgeBase:
 
     def tell_perception(self, position, previous_position, perception):
 
+        print('\n')
+        print("Posição atual:          " + str(position))
+        print("Percepção atual:        " + str(perception))
+        print("Posições desconhecidas: " + str(self.unknown))
+
         if position not in self.visited:
+            self.max_iterations = 0
             self.visited.append(position)
         else:
             self.max_iterations += 1
@@ -47,6 +50,7 @@ class KnowledgeBase:
         # Se o agente caminha para uma parede, este recebe uma percepção de impacto e deve voltar para sua posição anterior
         if perception[3] == 'Impacto':
             self.limits.append(position)
+            self.safe.remove(position)
             return 'Volte', self.max_iterations
 
         if perception[2] == 'Resplendor':
@@ -66,13 +70,9 @@ class KnowledgeBase:
             elif adjacent[i] not in self.safe:
                 self.safe.append(adjacent[i])
 
-        print('\n')
-        print("Posição atual:          " + str(position))
-        print("Percepção atual:        " + str(perception))
-        print("Possível poço em:       " + str(self.possible_pit))
+        print("Possível Poço em:       " + str(self.possible_pit))
         print("Possível Wumpus em:     " + str(self.possible_wumpus))
         print("Posições seguras:       " + str(self.safe))
-        print("Posições desconhecidas: " + str(self.unknown))
 
         return 'Continue', self.max_iterations
 
@@ -88,19 +88,4 @@ class KnowledgeBase:
                     actions[i] not in self.possible_wumpus and actions[i] not in self.possible_pit:
                 return actions[i]
 
-        if actions not in self.safe:
-            return previous_position
-
-
-# Teste
-def main():
-
-    world = WumpusWorld()
-    base = KnowledgeBase(world)
-
-    for i in range(size):
-        print(world.field[i])
-
-
-if __name__ == '__main__':
-    main()
+        return previous_position
