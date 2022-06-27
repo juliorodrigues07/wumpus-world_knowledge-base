@@ -13,4 +13,4 @@ Implementação de um algoritmo capaz de gerar a configuração inicial, armazen
        
 # Execução
 
-       python3 movimentation_logic.py
+       python3 main.py
