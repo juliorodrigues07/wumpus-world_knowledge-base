@@ -6,7 +6,7 @@ from environment import size
 
 class Main:
 
-    print('\nGerando a configuração inicial do Mundo do Wumpus ' + str(size - 1) + 'x' + str(size - 1) + '...\n')
+    print('\nGerando a configuração inicial do Mundo do Wumpus ' + str(size - 2) + 'x' + str(size - 2) + '...\n')
     world = WumpusWorld()
 
     print("\n\t MUNDO GERADO:")
