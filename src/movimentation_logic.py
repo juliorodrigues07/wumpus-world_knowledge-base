@@ -1,8 +1,6 @@
 from knowledge_base import KnowledgeBase
 from environment import WumpusWorld
-from utilities import calculate_action
 from utilities import possible_actions
-from utilities import invert_position
 
 # Medida de desempenho
 got_gold = 1000
@@ -33,37 +31,43 @@ class Exploration:
 
     def move_agent(self):
 
-        i = 0
-        while True:
+        # Primeira iteração: Apenas exibe a percepção recebida pelo agente no início, e realiza algumas deduções
+        self.previous_position = self.position
+        perception = self.world.get_perception(self.position)
+        _, count = self.base.tell_perception(self.position, self.previous_position, perception)
 
-            if i == 0:
-                self.previous_position = self.position
+        # Se o agente estagna em busca pelo ouro, a exploração se encerra
+        while count < 5:
 
-                perception = self.world.get_perception(self.position)
-                status, count = self.base.tell_perception(self.position, self.previous_position, perception)
-            else:
-                # Obtém todas as posições adjacentes e pergunta à base de conhecimento qual o melhor movimento
-                actions = possible_actions(self.position)
-                next_action = self.base.ask_knowledge_base(actions, self.previous_position)
+            # Obtém todas as posições adjacentes e pergunta à base de conhecimento qual o melhor movimento
+            actions = possible_actions(self.position)
+            next_action = self.base.ask_knowledge_base(actions)
 
-                # Atualiza as posições anterior e atual do agente
-                self.previous_position = self.position
-                self.position = next_action
+            # Atualiza as posições anterior e atual do agente
+            self.previous_position = self.position
+            self.position = next_action
 
-                # Atualiza a pontuação, direção anterior e atual do agente
-                self.previous_pointing = self.pointing
-                actual, self.pointing = calculate_action(self.previous_position, self.previous_pointing, self.position)
-                self.total_actions += actual
+            # Se o agente foi para uma posição que contém um poço ou o Wumpus vivo, o jogo encerra
+            self.check_alive(self.position)
+            if not self.alive:
+                self.points += got_killed
+                print('O agente foi morto!')
+                break
 
-                # Obtém a percepção da posição atual do agente
-                perception = self.world.get_perception(self.position)
+            # Atualiza a pontuação, direção anterior e atual do agente
+            self.previous_pointing = self.pointing
+            actual, self.pointing = self.calculate_action(self.previous_position, self.previous_pointing, self.position)
+            self.total_actions += actual
 
-                # Informa à base de conhecimento a percepção atual para inferir possíveis objetos ao redor do agente
-                status, count = self.base.tell_perception(self.position, self.previous_position, perception)
+            # Obtém a percepção da posição atual do agente
+            perception = self.world.get_perception(self.position)
+
+            # Informa à base de conhecimento a percepção atual para inferir possíveis objetos ao redor do agente
+            status, count = self.base.tell_perception(self.position, self.previous_position, perception)
 
             # Caso em que o agente encontra uma parede
             if status == 'Volte':
-                self.pointing = invert_position(self.previous_pointing)
+                self.pointing = self.rotate_180(self.previous_pointing)
                 self.position = self.previous_position
                 self.total_actions += 3     # Gira 180° e move para frente
                 print('\nO agente encontrou uma parede e ficou na posição ' + str(self.position))
@@ -75,10 +79,70 @@ class Exploration:
                 self.gold = True
                 break
 
-            # Se o agente estagna em busca pelo ouro, a exploração se encerra
-            if count > 5:
-                break
-
-            i += 1
-
+        # Calcula a pontuação final de acordo com o número de ações executadas
         self.points += self.total_actions * action_exe
+
+    def check_alive(self, position):
+
+        x, y = position[0], position[1]
+        perception = self.world.get_perception(position)
+
+        # Diz se o agente foi morto conforme a posição dada
+        if self.world.field[x][y] == 'W' or self.world.field[x][y] == 'P':
+            self.alive = False
+        elif self.world.field[x][y] == 'O&W' and perception[4] != 'Grito':
+            self.alive = False
+
+    @staticmethod
+    def rotate_180(previous_pointing):
+
+        if previous_pointing == 'Direita':
+            return 'Esquerda'
+        elif previous_pointing == 'Esquerda':
+            return 'Direita'
+        elif previous_pointing == 'Cima':
+            return 'Baixo'
+        else:
+            return 'Cima'
+
+    @staticmethod
+    def calculate_action(previous_position, previous_pointing, position):
+
+        pointing = str()
+        actions = 1
+        x1, y1 = previous_position[0], previous_position[1]
+        x2, y2 = position[0], position[1]
+
+        if x2 > x1 and y2 == y1:
+            pointing = 'Baixo'
+
+            if previous_pointing == 'Cima':
+                actions += 2
+            elif previous_pointing == 'Direita' or previous_position == 'Esquerda':
+                actions += 1
+
+        elif x2 < x1 and y2 == y1:
+            pointing = 'Cima'
+
+            if previous_pointing == 'Baixo':
+                actions += 2
+            elif previous_pointing == 'Direita' or previous_position == 'Esquerda':
+                actions += 1
+
+        elif x2 == x1 and y2 > y1:
+            pointing = 'Direita'
+
+            if previous_pointing == 'Esquerda':
+                actions += 2
+            elif previous_pointing == 'Cima' or previous_position == 'Baixo':
+                actions += 1
+
+        elif x2 == x1 and y2 < y1:
+            pointing = 'Esquerda'
+
+            if previous_pointing == 'Direita':
+                actions += 2
+            elif previous_pointing == 'Cima' or previous_position == 'Baixo':
+                actions += 1
+
+        return actions, pointing
