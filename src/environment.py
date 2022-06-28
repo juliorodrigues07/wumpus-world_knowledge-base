@@ -120,9 +120,11 @@ class WumpusWorld:
                 else:
                     if 'W' in neighbors:
                         perception[0] = 'Fedor'
+                    if 'O&W' in neighbors:
+                        perception[0] = 'Fedor'
                     if 'P' in neighbors:
                         perception[1] = 'Brisa'
-                    if self.field[x][y] == 'O':
+                    if self.field[x][y] == 'O' or self.field[x][y] == 'O&W':
                         perception[2] = 'Resplendor'
 
                 perception_line.append(perception)
