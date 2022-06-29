@@ -8,6 +8,9 @@ got_killed = -1000
 action_exe = -1
 arrow_use = -10
 
+# Limite de iterações sem obter novos conhecimentos sobre o ambiente
+max_iter = 8
+
 
 class Exploration:
 
@@ -37,7 +40,7 @@ class Exploration:
         _, count = self.base.tell_perception(self.position, self.previous_position, perception)
 
         # Se o agente estagna em busca pelo ouro, a exploração se encerra
-        while count < 5:
+        while count < max_iter:
 
             # Obtém todas as posições adjacentes e pergunta à base de conhecimento qual o melhor movimento
             actions = possible_actions(self.position)
@@ -51,7 +54,7 @@ class Exploration:
             self.check_alive(self.position)
             if not self.alive:
                 self.points += got_killed
-                print('O agente foi morto!')
+                print('\nO agente foi MORTO!')
                 break
 
             # Atualiza a pontuação, direção anterior e atual do agente
@@ -70,7 +73,7 @@ class Exploration:
                 self.pointing = self.rotate_180(self.previous_pointing)
                 self.position = self.previous_position
                 self.total_actions += 3     # Gira 180° e move para frente
-                print('\nO agente encontrou uma parede e ficou na posição ' + str(self.position))
+                print('\nO agente encontrou uma PAREDE e ficou na posição ' + str(self.position))
 
             # Caso em que o agente encontra o ouro
             elif status == 'Ouro':
@@ -79,7 +82,17 @@ class Exploration:
                 self.gold = True
                 break
 
-        # Calcula a pontuação final de acordo com o número de ações executadas
+            # Se o agente não consegue progredir, este tenta atirar a flecha no Wumpus
+            if count == max_iter - 1:
+                shoot = self.base.shoot_arrow()
+
+                # Checa se existe uma posição válida para atirar
+                if shoot:
+                    self.points += arrow_use
+                    check = self.world.kill_wumpus(shoot)
+                    self.base.update_knowledge_base(shoot, check)
+
+        # Calcula a pontuação final conforme o número de ações executadas
         self.points += self.total_actions * action_exe
 
     def check_alive(self, position):
@@ -88,7 +101,9 @@ class Exploration:
         perception = self.world.get_perception(position)
 
         # Diz se o agente foi morto conforme a posição dada
-        if self.world.field[x][y] == 'W' or self.world.field[x][y] == 'P':
+        if self.world.field[x][y] == 'P':
+            self.alive = False
+        elif self.world.field[x][y] == 'W' and perception[4] != 'Grito':
             self.alive = False
         elif self.world.field[x][y] == 'O&W' and perception[4] != 'Grito':
             self.alive = False
@@ -113,9 +128,11 @@ class Exploration:
         x1, y1 = previous_position[0], previous_position[1]
         x2, y2 = position[0], position[1]
 
+        # x da posição atual maior que a anterior --> o agente moveu-se para baixo
         if x2 > x1 and y2 == y1:
             pointing = 'Baixo'
 
+            # Se o agente estava apontando para cima, ele deve rotacionar 2 vezes para apontar para baixo
             if previous_pointing == 'Cima':
                 actions += 2
             elif previous_pointing == 'Direita' or previous_position == 'Esquerda':
