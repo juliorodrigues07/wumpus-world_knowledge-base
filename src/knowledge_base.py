@@ -71,27 +71,27 @@ class KnowledgeBase:
             adjacent.remove(previous_position)
 
         # Se a percepção atual indica perigo, as posições adjacentes são marcadas indicando os locais onde o agente não poderia se arriscar
-        for i in range(len(adjacent)):
+        for adj in adjacent:
 
             # Analisa somente posições interiores ao mundo (Exclui as paredes)
-            if exclude_walls(adjacent[i], size):
+            if exclude_walls(adj, size):
 
                 # Se não há brisa ou fedor, as posições adjacentes são seguras
-                if perception[0] == 'Nada' and perception[1] == 'Nada' and adjacent[i] not in self.safe:
-                    self.safe.append(adjacent[i])
+                if perception[0] == 'Nada' and perception[1] == 'Nada' and adj not in self.safe:
+                    self.safe.append(adj)
 
-                if perception[0] == 'Fedor' and adjacent[i] not in self.safe and\
-                        adjacent[i] not in self.possible_wumpus and adjacent[i] not in self.no_wumpus:
-                    self.possible_wumpus.append(adjacent[i])
-                if perception[1] == 'Brisa' and adjacent[i] not in self.safe and\
-                        adjacent[i] not in self.possible_pit and adjacent[i] not in self.no_pits:
-                    self.possible_pit.append(adjacent[i])
+                if perception[0] == 'Fedor' and adj not in self.safe and\
+                        adj not in self.possible_wumpus and adj not in self.no_wumpus:
+                    self.possible_wumpus.append(adj)
+                if perception[1] == 'Brisa' and adj not in self.safe and\
+                        adj not in self.possible_pit and adj not in self.no_pits:
+                    self.possible_pit.append(adj)
 
                 # O agente pode descartar possíveis Wumpus e poços em determinadas posições de acordo com percepções anteriores
-                if perception[0] == 'Nada' and adjacent[i] in self.possible_wumpus:
-                    self.no_wumpus.append(adjacent[i])
-                if perception[1] == 'Nada' and adjacent[i] in self.possible_pit:
-                    self.no_pits.append(adjacent[i])
+                if perception[0] == 'Nada' and adj in self.possible_wumpus:
+                    self.no_wumpus.append(adj)
+                if perception[1] == 'Nada' and adj in self.possible_pit:
+                    self.no_pits.append(adj)
 
         for x in self.no_wumpus:
             if x in self.possible_wumpus:
@@ -107,27 +107,40 @@ class KnowledgeBase:
 
         return 'Continue', self.max_iterations
 
-    def ask_knowledge_base(self, actions):
+    def ask_knowledge_base(self, previous_position, actions):
 
-        safe_spots = list()
+        prior_1, prior_2, prior_3 = list(), list(), list()
 
         # Este laço possibilita o agente caminhar para uma parede, recebendo um impacto na percepção
         # Retorna uma ação que garante a segurança do agente, priorizando por posições desconhecidas no mundo
-        for i in range(len(actions)):
-            if actions[i] in self.unknown and actions[i] not in self.possible_wumpus and actions[i] not in self.possible_pit:
-                return actions[i]
+        for action in actions:
+            if action in self.unknown and action not in self.possible_wumpus and action not in self.possible_pit:
+                prior_3.append(action)
+
+        if prior_3:
+            if previous_position in prior_3 and len(prior_3) > 1:
+                prior_3.remove(previous_position)
+            return random.choice(prior_3)
 
         # Procura por posições seguras, mas não visitadas
-        for i in range(len(actions)):
-            if actions[i] in self.safe and actions[i] not in self.visited:
-                return actions[i]
+        for action in actions:
+            if action in self.safe and action not in self.visited:
+                prior_2.append(action)
+
+        if prior_2:
+            if previous_position in prior_2 and len(prior_2) > 1:
+                prior_2.remove(previous_position)
+            return random.choice(prior_2)
 
         # Por fim, retorna uma posição segura e já visitada, em caso negativo nas 2 condições anteriores
-        for i in range(len(actions)):
-            if actions[i] in self.safe:
-                safe_spots.append(actions[i])
+        for action in actions:
+            if action in self.safe:
+                prior_1.append(action)
 
-        return random.choice(safe_spots)
+        if prior_1:
+            if previous_position in prior_1 and len(prior_1) > 1:
+                prior_1.remove(previous_position)
+            return random.choice(prior_1)
 
     def shoot_arrow(self):
 
@@ -150,10 +163,10 @@ class KnowledgeBase:
         if check:
             print('\nO agente atirou a flecha em ' + str(shoot) + ' e MATOU o Wumpus!')
 
-            if len(self.possible_wumpus) == 1:
-                self.possible_wumpus.clear()
-                self.safe.append(shoot)
-            else:
+            self.safe.append(shoot)
+            self.possible_wumpus.remove(shoot)
+
+            if self.possible_wumpus:
                 for position in self.possible_wumpus:
                     if position not in self.possible_pit:
                         self.possible_wumpus.pop(0)
