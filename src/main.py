@@ -18,15 +18,15 @@ class Main:
         print(world.perceptions[i])
 
     base = KnowledgeBase(world)
-    t = Exploration(world, base)
-    t.move_agent()
+    explore = Exploration(world, base)
+    explore.move_agent()
 
-    if t.gold:
-        print('\nOuro encontrado!')
+    if explore.gold:
+        print('\nOURO ENCONTRADO!')
     else:
-        print('\nO agente não conseguiu encontrar o ouro!')
+        print('\nO agente NÃO CONSEGUIU encontrar o ouro!')
 
-    print('\nPontuação: ' + str(t.points))
+    print('\nPONTUAÇÃO: ' + str(explore.points) + '\n')
 
 
 if __name__ == '__main__':
