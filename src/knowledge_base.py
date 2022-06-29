@@ -50,9 +50,9 @@ class KnowledgeBase:
             self.unknown.remove(position)
 
         print('\n')
-        print("Posição atual:          " + str(position))
-        print("Percepção atual:        " + str(perception))
-        print("Posições desconhecidas: " + str(self.unknown))
+        print('Posição atual:          ' + str(position))
+        print('Percepção atual:        ' + str(perception))
+        print('Posições desconhecidas: ' + str(self.unknown))
 
         # Se o agente caminha para uma parede, este recebe uma percepção de impacto e deve voltar para sua posição anterior
         if perception[3] == 'Impacto':
@@ -101,9 +101,9 @@ class KnowledgeBase:
             if x in self.possible_pit:
                 self.possible_pit.remove(x)
 
-        print("Possível Poço em:       " + str(self.possible_pit))
-        print("Possível Wumpus em:     " + str(self.possible_wumpus))
-        print("Posições seguras:       " + str(self.safe))
+        print('Possível Poço em:       ' + str(self.possible_pit))
+        print('Possível Wumpus em:     ' + str(self.possible_wumpus))
+        print('Posições seguras:       ' + str(self.safe))
 
         return 'Continue', self.max_iterations
 
@@ -111,7 +111,7 @@ class KnowledgeBase:
 
         safe_spots = list()
 
-        # Este laço possibilita o agente caminha para uma parede, recebendo como percepção um impacto
+        # Este laço possibilita o agente caminhar para uma parede, recebendo um impacto na percepção
         # Retorna uma ação que garante a segurança do agente, priorizando por posições desconhecidas no mundo
         for i in range(len(actions)):
             if actions[i] in self.unknown and actions[i] not in self.possible_wumpus and actions[i] not in self.possible_pit:
@@ -128,3 +128,42 @@ class KnowledgeBase:
                 safe_spots.append(actions[i])
 
         return random.choice(safe_spots)
+
+    def shoot_arrow(self):
+
+        # Se existe posições válidas em que o Wumpus pode estar
+        if self.possible_wumpus:
+
+            # Se existe mais de uma, o agente escolhe de forma aleatória para onde atirar
+            if len(self.possible_wumpus) > 1:
+                return random.choice(self.possible_wumpus)
+
+            # Tiro certeiro
+            else:
+                return self.possible_wumpus[0]
+        else:
+            return False
+
+    def update_knowledge_base(self, shoot, check):
+
+        # Se o Wumpus foi morto ou não, atualiza-se a base de conhecimento
+        if check:
+            print('\nO agente atirou a flecha em ' + str(shoot) + ' e MATOU o Wumpus!')
+
+            if len(self.possible_wumpus) == 1:
+                self.possible_wumpus.clear()
+                self.safe.append(shoot)
+            else:
+                for position in self.possible_wumpus:
+                    if position not in self.possible_pit:
+                        self.possible_wumpus.pop(0)
+                        self.safe.append(position)
+        else:
+            if shoot not in self.possible_pit:
+                self.possible_wumpus.remove(shoot)
+                self.safe.append(shoot)
+
+            print('\nO agente atirou a flecha em ' + str(shoot) + ' e NÃO MATOU o Wumpus!')
+
+        # Continua a exploração
+        self.max_iterations = 0
