@@ -23,6 +23,7 @@ class Exploration:
         self.time = 0
         self.points = 0
         self.gold = False
+        self.arrow = True
         self.alive = True
 
         self.previous_position = world.agent
@@ -44,7 +45,7 @@ class Exploration:
 
             # Obtém todas as posições adjacentes e pergunta à base de conhecimento qual o melhor movimento
             actions = possible_actions(self.position)
-            next_action = self.base.ask_knowledge_base(actions)
+            next_action = self.base.ask_knowledge_base(self.previous_position, actions)
 
             # Atualiza as posições anterior e atual do agente
             self.previous_position = self.position
@@ -83,11 +84,12 @@ class Exploration:
                 break
 
             # Se o agente não consegue progredir, este tenta atirar a flecha no Wumpus
-            if count == max_iter - 1:
+            if count == max_iter - 1 and self.arrow:
                 shoot = self.base.shoot_arrow()
 
                 # Checa se existe uma posição válida para atirar
                 if shoot:
+                    self.arrow = False
                     self.points += arrow_use
                     check = self.world.kill_wumpus(shoot)
                     self.base.update_knowledge_base(shoot, check)
